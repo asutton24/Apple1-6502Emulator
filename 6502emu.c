@@ -24,14 +24,25 @@ void sleepCycles(float b){
 }
 
 void printb(byte b){
-    if (b>128){
-        printf("%c", b - 128);
+    if (b != 0 && b != 128){
+        if (b == 0x8D || b == 0xD){
+            printf("\n");
+            column = 0;
+            mem[0xD012] = 0;
+            return;
+        }
+        if (b > 128){
+            printf("%c", b - 128);
+        } else {
+            printf("%c", b);
+        }
         column++;
         if (column == 40){
          printf("\n");
         }
     }
-    mem[0xD013] = 0;
+    
+    mem[0xD012] = 0;
 }
 void branch(byte b){
     cycles++;
@@ -115,12 +126,12 @@ void cmpFlags(char c, byte b){
             break;
     }
     byte cm = *p - b;
-    if (cm == 0){
+    if (*p == b){
         flags = flags | 2;
     } else {
         flags = flags & 253;
     }
-    if (cm >= 0){
+    if (*p >= b){
         flags = flags | 1;
     } else {
         flags = flags & 254;
@@ -190,7 +201,7 @@ int runcmd(){
             ldFlags('a');
             break;
         case 0xBD:
-            add = mem[mem[pgc + 1] + mem[pgc + 2] * 256];
+            add = mem[pgc + 1] + mem[pgc + 2] * 256;
             pgc += 2;
             nadd = add + x;
             a = mem[nadd];
@@ -202,7 +213,7 @@ int runcmd(){
             ldFlags('a');
             break;
         case 0xB9:
-            add = mem[mem[pgc + 1] + mem[pgc + 2] * 256];
+            add = mem[pgc + 1] + mem[pgc + 2] * 256;
             pgc += 2;
             nadd = add + y;
             a = mem[nadd];
@@ -260,7 +271,7 @@ int runcmd(){
             ldFlags('x');
             break;
         case 0xBE:
-            add = mem[mem[pgc + 1] + mem[pgc + 2] * 256];
+            add = mem[pgc + 1] + mem[pgc + 2] * 256;
             pgc += 2;
             nadd = add + y;
             x = mem[nadd];
@@ -297,7 +308,7 @@ int runcmd(){
             ldFlags('y');
             break;
         case 0xBC:
-            add = mem[mem[pgc + 1] + mem[pgc + 2] * 256];
+            add = mem[pgc + 1] + mem[pgc + 2] * 256;
             pgc += 2;
             nadd = add + x;
             y = mem[nadd];
@@ -456,7 +467,7 @@ int runcmd(){
             ldFlags('a');
             break;
         case 0x3D:
-            add = mem[mem[pgc + 1] + mem[pgc + 2] * 256];
+            add = mem[pgc + 1] + mem[pgc + 2] * 256;
             pgc += 2;
             nadd = add + x;
             a = a & mem[nadd];
@@ -468,7 +479,7 @@ int runcmd(){
             ldFlags('a');
             break;
         case 0x39:
-            add = mem[mem[pgc + 1] + mem[pgc + 2] * 256];
+            add = mem[pgc + 1] + mem[pgc + 2] * 256;
             pgc += 2;
             nadd = add + y;
             a = a & mem[nadd];
@@ -526,7 +537,7 @@ int runcmd(){
             ldFlags('a');
             break;
         case 0x5D:
-            add = mem[mem[pgc + 1] + mem[pgc + 2] * 256];
+            add = mem[pgc + 1] + mem[pgc + 2] * 256;
             pgc += 2;
             nadd = add + x;
             a = a ^ mem[nadd];
@@ -538,7 +549,7 @@ int runcmd(){
             ldFlags('a');
             break;
         case 0x59:
-            add = mem[mem[pgc + 1] + mem[pgc + 2] * 256];
+            add = mem[pgc + 1] + mem[pgc + 2] * 256;
             pgc += 2;
             nadd = add + y;
             a = a ^ mem[nadd];
@@ -596,7 +607,7 @@ int runcmd(){
             ldFlags('a');
             break;
         case 0x1D:
-            add = mem[mem[pgc + 1] + mem[pgc + 2] * 256];
+            add = mem[pgc + 1] + mem[pgc + 2] * 256;
             pgc += 2;
             nadd = add + x;
             a = a | mem[nadd];
@@ -608,7 +619,7 @@ int runcmd(){
             ldFlags('a');
             break;
         case 0x19:
-            add = mem[mem[pgc + 1] + mem[pgc + 2] * 256];
+            add = mem[pgc + 1] + mem[pgc + 2] * 256;
             pgc += 2;
             nadd = add + y;
             a = a | mem[nadd];
@@ -642,8 +653,8 @@ int runcmd(){
             break;
         case 0x24:
             pgc++;
-            flags = (flags & 63) | (mem[pgc] & 192);
-            if (a & mem[pgc] == 0){
+            flags = (flags & 63) | (mem[mem[pgc]] & 192);
+            if (a & mem[mem[pgc]] == 0){
                 flags = flags | 2;
             } else {
                 flags = flags & 253;
@@ -658,6 +669,7 @@ int runcmd(){
             } else {
                 flags = flags & 253;
             }
+            pgc += 2;
             cycles = 4;
             break;
         case 0x69:
@@ -686,7 +698,7 @@ int runcmd(){
             ldFlags('a');
             break;
         case 0x7D:
-            add = mem[mem[pgc + 1] + 256 * mem[pgc + 2]];
+            add = mem[pgc + 1] + 256 * mem[pgc + 2];
             nadd = add + x;
             addFlags(mem[nadd]);
             if (nadd < add){
@@ -698,8 +710,8 @@ int runcmd(){
             ldFlags('a');
             break;
         case 0x79:
-            add = mem[mem[pgc + 1] + 256 * mem[pgc + 2]];
-            nadd = add + x;
+            add = mem[pgc + 1] + 256 * mem[pgc + 2];
+            nadd = add + y;
             addFlags(mem[nadd]);
             if (nadd < add){
                 cycles = 5;
@@ -756,7 +768,7 @@ int runcmd(){
             ldFlags('a');
             break;
         case 0xFD:
-            add = mem[mem[pgc + 1] + 256 * mem[pgc + 2]];
+            add = mem[pgc + 1] + 256 * mem[pgc + 2];
             nadd = add + x;
             subFlags(mem[nadd]);
             if (nadd < add){
@@ -768,8 +780,8 @@ int runcmd(){
             ldFlags('a');
             break;
         case 0xF9:
-            add = mem[mem[pgc + 1] + 256 * mem[pgc + 2]];
-            nadd = add + x;
+            add = mem[pgc + 1] + 256 * mem[pgc + 2];
+            nadd = add + y;
             subFlags(mem[nadd]);
             if (nadd < add){
                 cycles = 5;
@@ -822,7 +834,7 @@ int runcmd(){
             cycles = 4;
             break;
         case 0xDD:
-            add = mem[mem[pgc + 1] + 256 * mem[pgc + 2]];
+            add = mem[pgc + 1] + 256 * mem[pgc + 2];
             nadd = add + x;
             cmpFlags('a', mem[nadd]);
             if (nadd < add){
@@ -833,8 +845,8 @@ int runcmd(){
             pgc += 2;
             break;
         case 0xD9:
-            add = mem[mem[pgc + 1] + 256 * mem[pgc + 2]];
-            nadd = add + x;
+            add = mem[pgc + 1] + 256 * mem[pgc + 2];
+            nadd = add + y;
             cmpFlags('a', mem[nadd]);
             if (nadd < add){
                 cycles = 5;
@@ -1417,19 +1429,19 @@ int runcmd(){
             cycles = 7;
             break;
         case 0x4C:
-            pgc = mem[pgc + 1] + 256 * mem[pgc + 2];
+            pgc = mem[pgc + 1] + 256 * mem[pgc + 2] - 1;
             cycles = 3;
             break;
         case 0x6C:
             add = mem[pgc + 1] + 256 * mem[pgc + 2];
-            pgc = mem[add] + 256 * mem[add + 1];
+            pgc = mem[add] + 256 * mem[add + 1] - 1;
             cycles = 5;
             break;
         case 0x20:
             mem[256 + s - 1] = (pgc + 2) % 256;
             mem[256 + s] = (pgc + 2) / 256;
             s -= 2;
-            pgc = mem[pgc + 1] + 256 * mem[pgc + 2];
+            pgc = mem[pgc + 1] + 256 * mem[pgc + 2] - 1;
             cycles = 6;
             break;
         case 0x60:
@@ -1540,13 +1552,18 @@ int runcmd(){
 }
 int main(){
     byte wozmon[256];
+    byte basic[7936];
     FILE *file;
     file = fopen("monitor.rom", "rb");
     fread(wozmon, 1, 256, file);
     for (int i = 0; i < 256 ; i++){
         mem[0xFF00 + i] = wozmon[i];
     }
-    flags = flags | 1;
+    file = fopen("basic.rom", "rb");
+    fread(basic, 1, 7936, file);
+    for (int i = 0; i < 7936; i++){
+        mem[0xE000 + i] = basic[i];
+    }
     pgc = 0xFF00;
     byte pulse = 0;
     char lastChar = 0;
@@ -1561,6 +1578,9 @@ int main(){
             if (!hitLast){
                 mem[0xD010] = getch() + 128;
                 mem[0xd011] = 128; 
+                if (mem[0xD010] - 128 == 27){
+                    pgc = 0xFF00;
+                }
                 pulse = 0;
                 hitLast = 1;
             }
@@ -1570,13 +1590,16 @@ int main(){
         if (pulse > 10){
             mem[0xd011] = 0;
         }
-        sleepCycles(((float)(clock() - buffer)) * 1000 / CLOCKS_PER_SEC);
+        // sleepCycles(((float)(clock() - buffer)) * 1000 / CLOCKS_PER_SEC);
         if (flags & 16){
             pgc = 0xFF00;
+            flags = flags & (255 - 16);
         }
-        if ((float)clock() - printTimer / CLOCKS_PER_SEC >= 1/60){
-            printb(mem[0xD012]);
-        }
+        printb(mem[0xD012]);
+        //if (pgc >= 0xE000 && pgc < 0xFF00 && pgc != 0xE003 && pgc != 0xE006){
+        //    printf("%.04x: %.02x a: %.02x x: %.02x y: %.02x f: %.02x\n", pgc, mem[pgc], a, x, y, flags);
+        //    getch();
+        //} 
     }
     printf("a: %.02x\nx: %.02x\ny:%.02x\nf:%.02x\n", a, x, y, flags);
     return 0;
