@@ -1,5 +1,4 @@
 #include <stdio.h>
-#include <time.h>
 #include <windows.h>
 #include <conio.h>
 
@@ -14,14 +13,7 @@ dbyte pgc;
 byte mem[65536];
 byte s = 0xFF;
 byte column = 0;
-
-double clockSpeed = 1022727;
 byte cycles = 1;
-
-void sleepCycles(float b){
-    Sleep((((double)cycles) * 1000 / clockSpeed) - b);
-    return;
-}
 
 void printb(byte b){
     if (b != 0 && b != 128){
@@ -70,6 +62,7 @@ void addFlags(byte p){
         } else {
             flags = flags & 254;
         }
+        a = (dans/10) * 16 + (dans) % 10;
         if (((d1 & 128) && (d2 & 128) && !(dans & 128)) || (!(d1 & 128) && !(d2 & 128) && (dans & 128))){
             flags = flags | 64;
         } else {
@@ -99,9 +92,10 @@ void subFlags(byte b){
         if (dans >= 0){
             flags = flags | 1;
         } else{
-            dans %= 100;
+            dans += 100;
+            flags = flags & 254;
         }
-        a = (dans / 10) * 16 + (dans % 16);
+        a = (dans / 10) * 16 + (dans % 10);
         if (((d1 & 128) && (d2 & 128) && !(dans & 128)) || (!(d1 & 128) && !(d2 & 128) && (dans & 128))){
             flags = flags | 64;
         } else {
@@ -1550,28 +1544,81 @@ int runcmd(){
     pgc++;
     return 0;
 }
-int main(){
-    byte wozmon[256];
-    byte basic[7936];
+
+int toHex(char* c){
+    int ans = 0;
+    int pow = 4096;
+    for (int i = 0; i < 4; i++){
+        if (c[i] >= '0' && c[i] <= '9'){
+            ans += (c[i] - '0') * pow;
+        } else if (c[i] >= 'A' && c[i] <= 'F'){
+            ans += (c[i] - 'A' + 10) * pow;
+        } else if (c[i] >= 'a' && c[i] <= 'f'){
+            ans += (c[i] - 'f' + 10) * pow;
+        } else {
+            return -1;
+        }
+        pow /= 16;
+    }
+    return ans;
+}
+
+int main(int argc, char** argv){
+    byte* wozmon = (byte*)malloc(256);
+    byte* basic = (byte*)malloc(4096);
+    byte* buffer = (byte*)malloc(8192);
     FILE *file;
+    int low;
+    int high;
+    if (argc > 1){
+        if ((argc - 1) % 3 != 0){
+            printf("Arguement error\n");
+            return 0;
+        }
+        for (int i = 1; i < argc; i += 3){
+            file = fopen(argv[i], "rb");
+            if (file == NULL){
+                printf("%s not found\n", argv[i + 1]);
+                return 0;
+            }
+            low = toHex(argv[i + 1]);
+            high = toHex(argv[i + 2]);
+            if (high <= low || low == -1 || high == -1){
+                printf("Hex parsing error\n");
+                return 0;
+            }
+            fread(buffer, 1, 8192, file);
+            for (int i = 0; i <= high - low; i++){
+                mem[low + i] = buffer[i];
+            }
+        }
+    }
     file = fopen("monitor.rom", "rb");
+    if (file == NULL){
+        printf("Monitor not found\n");
+        return 0;
+    }
     fread(wozmon, 1, 256, file);
     for (int i = 0; i < 256 ; i++){
         mem[0xFF00 + i] = wozmon[i];
     }
     file = fopen("basic.rom", "rb");
-    fread(basic, 1, 7936, file);
-    for (int i = 0; i < 7936; i++){
+    if (file == NULL){
+        printf("Basic not found\n");
+        return 0;
+    }
+    fread(basic, 1, 4096, file);
+    for (int i = 0; i < 4096; i++){
         mem[0xE000 + i] = basic[i];
     }
     pgc = 0xFF00;
     byte pulse = 0;
     char lastChar = 0;
-    clock_t buffer;
-    clock_t printTimer = clock();
     byte hitLast = 0;
+    free(wozmon);
+    free(basic);
+    free(buffer);
     while (1){
-        buffer = clock();
         runcmd();
         pulse += cycles;
         if (kbhit()){
@@ -1587,10 +1634,9 @@ int main(){
         } else {
             hitLast = 0;
         }
-        if (pulse > 10){
+        if (pulse > 20){
             mem[0xd011] = 0;
         }
-        // sleepCycles(((float)(clock() - buffer)) * 1000 / CLOCKS_PER_SEC);
         if (flags & 16){
             pgc = 0xFF00;
             flags = flags & (255 - 16);
