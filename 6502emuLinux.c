@@ -656,7 +656,7 @@ int runcmd(){
             cycles = 3;
             break;
         case 0x2C:
-            add = mem[pgc + 2] + 256 * mem[pgc + 2];
+            add = mem[pgc + 1] + 256 * mem[pgc + 2];
             flags = (flags & 63) | (mem[add] & 192);
             if (a & mem[add] == 0){
                 flags = flags | 2;
