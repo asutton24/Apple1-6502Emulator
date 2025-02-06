@@ -242,7 +242,7 @@ int parseInstruction(int op, int ad, int arg, byte pass){
             break;
         case 19:
             splitType = 6;
-            splitData = 0xC0C4CC;
+            splitData = 0xCCC4C0;
             break;
         case 20:
             splitType = 7;
