@@ -544,12 +544,14 @@ int parseInstruction(int op, int ad, int arg, byte pass){
                 case 3:
                     instruct[0]++;
                     instruct[1] = splits[3];
+                    break;
                 case 6:
                     instruct[1] = splits[2];
                     break;
                 case 7:
                     instruct[0]++;
                     instruct[1] = splits[4];
+                    break;
                 default: return -1;
             }
             break;
@@ -565,12 +567,14 @@ int parseInstruction(int op, int ad, int arg, byte pass){
                 case 3:
                     instruct[0]++;
                     instruct[1] = splits[3];
+                    break;
                 case 4:
                     instruct[1] = splits[2];
                     break;
                 case 5:
                     instruct[0]++;
                     instruct[1] = splits[4];
+                    break;
                 default: return -1;
             }
             break;
