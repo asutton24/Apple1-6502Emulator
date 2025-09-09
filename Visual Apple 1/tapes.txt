@@ -1,5 +1,0 @@
-2048.rom 0300 06C2
-lander.rom 0300 0FFF
-shut.rom 0300 06FF
-blackjack1.rom 004A 00FF
-blackjack2.rom 0800 0FFF
