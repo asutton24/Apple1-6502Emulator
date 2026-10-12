@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "6502emu.h"
+#include "raylib.h"
 
 typedef unsigned char byte;
 typedef unsigned short int dbyte;
@@ -72,11 +73,11 @@ void subFlags(byte b){
     if (flags & 8){
         char d1 = (a/16)*10 + a%16;
         char d2 = (b/16)*10 + b%16;
-        char dans = d1 - d2 - (1 - (flags & 1));
+		int dans = d1 - d2 - (1 - (flags & 1));
         if (dans >= 0){
             flags = flags | 1;
         } else{
-            dans += 100;
+            dans = (dans + 100) % 256;
             flags = flags & 254;
         }
         a = (dans / 10) * 16 + (dans % 10);
