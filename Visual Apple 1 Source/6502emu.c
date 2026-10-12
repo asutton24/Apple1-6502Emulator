@@ -1,7 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include "6502emu.h"
-#include "raylib.h"
+#include "6502emu.h"
 
 typedef unsigned char byte;
 typedef unsigned short int dbyte;
